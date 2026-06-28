@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Nana ナナ · 心理战卡牌</title>
+<style>
+  :root{
+    --felt:#1f6e4d; --felt2:#155b3e; --ink:#16241d; --cream:#f7f1df;
+    --gold:#e9c46a; --accent:#e76f51; --good:#2ecc71; --bad:#e74c3c;
+    --card-w:74px; --card-h:103px; --radius:12px;
+    --shadow:0 6px 16px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    color:var(--cream);
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #2a8a61 0%, var(--felt) 45%, var(--felt2) 100%) fixed;
+    overflow:hidden;
+  }
+  #app{height:100vh;width:100vw;position:relative}
+  button{font-family:inherit;cursor:pointer}
+  .btn{
+    border:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:14px;
+    background:linear-gradient(#ffd97a,var(--gold));color:#5a3d12;box-shadow:var(--shadow);
+    transition:transform .08s ease, filter .15s;
+  }
+  .btn:hover{filter:brightness(1.05)} .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:rgba(255,255,255,.12);color:var(--cream);box-shadow:none;border:1px solid rgba(255,255,255,.25)}
+  .btn.big{font-size:18px;padding:13px 30px}
+
+  /* ---------- overlays ---------- */
+  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(8,20,14,.72);backdrop-filter:blur(3px);z-index:50;padding:20px}
+  .panel{background:#fffdf6;color:#26302a;border-radius:18px;max-width:560px;width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);max-height:92vh;overflow:auto}
+  .panel .pad{padding:24px 26px}
+  .panel h1{margin:0 0 4px;font-size:30px;letter-spacing:1px}
+  .panel h2{margin:18px 0 8px;font-size:18px;color:#1f6e4d}
+  .panel p,.panel li{line-height:1.5;font-size:14px;color:#3a463f}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .logo{width:54px;height:74px;border-radius:8px;background:#9bcf3c center/cover;box-shadow:var(--shadow);
+    display:flex;align-items:center;justify-content:center;font-weight:900;color:#1c3b00;font-size:13px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .seg{display:inline-flex;border-radius:10px;overflow:hidden;border:1px solid #d8d2bf}
+  .seg button{border:none;background:#f0ead7;color:#5a5240;padding:8px 14px;font-weight:700}
+  .seg button.on{background:#1f6e4d;color:#fff}
+  .field{margin:10px 0}
+  .field label{display:block;font-weight:700;margin-bottom:5px;color:#26302a;font-size:14px}
+  input[type=text],input[type=password],select{
+    width:100%;padding:10px 12px;border-radius:9px;border:1px solid #cfc8b4;background:#fff;font-size:14px;color:#222}
+  .hint{font-size:12.5px;color:#7a7361;margin-top:5px}
+  .switch{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+  .switch input{width:18px;height:18px}
+  table.legend{width:100%;border-collapse:collapse;margin-top:6px}
+  table.legend td{padding:5px 6px;border-bottom:1px solid #eee;font-size:13px;vertical-align:top}
+
+  /* ---------- game layout ---------- */
+  #game{height:100%;display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:8px 10px}
+  #topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  #topbar .title{font-weight:900;font-size:20px;letter-spacing:1px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.4)}
+  #topbar .title small{font-weight:600;opacity:.8;font-size:12px;margin-left:6px}
+  #turnchip{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:6px 14px;font-weight:700;font-size:14px}
+  #attemptchip{background:var(--accent);border-radius:20px;padding:6px 14px;font-weight:800;font-size:14px;box-shadow:var(--shadow)}
+  #attemptchip.hide{display:none}
+  #topbar .spacer{flex:1}
+
+  #mid{display:grid;grid-template-columns:1fr 260px;gap:10px;min-height:0}
+  #board{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto;padding:4px}
+  #opponents{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  #center{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:auto}
+  #gridwrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+  #gridlabel{font-size:12px;opacity:.85;letter-spacing:1px}
+  #grid{display:grid;gap:8px;justify-content:center}
+  #you{margin-top:6px}
+
+  .seat{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px 10px;min-width:150px;position:relative}
+  .seat.active{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),0 0 22px rgba(233,196,106,.4)}
+  .seat .head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .seat .pbadge{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:var(--shadow);flex:none}
+  .seat .who{font-weight:800;font-size:14px;line-height:1.05}
+  .seat .who small{display:block;font-weight:600;font-size:11px;opacity:.8}
+  .seat .stat{margin-left:auto;font-size:11px;opacity:.85;text-align:right}
+  .cards{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-end}
+  .mini{font-size:11px;opacity:.85;margin:4px 0 2px}
+
+  /* you area */
+  #you .seat{min-width:auto}
+  #yourhand{display:flex;gap:6px;flex-wrap:wrap}
+  #you .card{--card-w:84px;--card-h:117px}
+
+  /* ---------- cards ---------- */
+  .card{
+    width:var(--card-w);height:var(--card-h);border-radius:10px;background:#0d3324 center/cover no-repeat;
+    box-shadow:var(--shadow);position:relative;flex:none;transition:transform .12s ease, box-shadow .12s;
+  }
+  .card.sm{--card-w:48px;--card-h:67px;border-radius:7px}
+  .card.set{--card-w:40px;--card-h:56px;border-radius:6px}
+  .card.clickable{cursor:pointer;outline:2px solid transparent}
+  .card.clickable:hover{transform:translateY(-8px);box-shadow:0 12px 22px rgba(0,0,0,.45)}
+  .card.askable{outline:3px solid var(--gold);box-shadow:0 0 14px rgba(233,196,106,.55)}
+  .card.target{outline:3px solid var(--accent)}
+  .card.empty{background:rgba(255,255,255,.05);border:2px dashed rgba(255,255,255,.18);box-shadow:none}
+  .card .endtag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--gold);color:#5a3d12;
+    font-size:10px;font-weight:800;border-radius:8px;padding:1px 7px;white-space:nowrap}
+  .card.reveal-pop{animation:pop .25s ease}
+  @keyframes pop{0%{transform:scale(.6) rotate(-6deg);opacity:.2}100%{transform:scale(1)}}
+
+  /* sets pile */
+  .sets{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .setgrp{position:relative;width:40px;height:56px}
+  .setgrp .card.set{position:absolute;top:0;left:0}
+  .setgrp .card.set:nth-child(2){top:3px;left:3px}
+  .setgrp .card.set:nth-child(3){top:6px;left:6px}
+
+  /* ---------- speech bubble ---------- */
+  .bubble{position:absolute;left:50%;top:-12px;transform:translate(-50%,-100%);
+    background:#fffbe9;color:#2a2118;border-radius:14px;padding:8px 12px;font-size:13px;font-weight:600;
+    max-width:230px;box-shadow:0 8px 22px rgba(0,0,0,.4);z-index:30;line-height:1.35;animation:bubbleIn .18s ease}
+  .bubble::after{content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);
+    border:7px solid transparent;border-top-color:#fffbe9;border-bottom:0}
+  .bubble .src{display:block;font-size:10px;font-weight:800;opacity:.6;margin-bottom:2px;letter-spacing:.5px}
+  .bubble.live .src{color:#1f6e4d}
+  .bubble.dots::after{}
+  @keyframes bubbleIn{from{opacity:0;transform:translate(-50%,-90%) scale(.9)}to{opacity:1}}
+
+  /* ---------- log ---------- */
+  #logpanel{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:8px 4px 8px 10px;display:flex;flex-direction:column;min-height:0}
+  #logpanel h3{margin:2px 6px 6px;font-size:13px;opacity:.85;letter-spacing:1px}
+  #log{list-style:none;margin:0;padding:0 6px 0 0;overflow:auto;flex:1;font-size:12.5px;line-height:1.5}
+  #log li{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06);opacity:.92}
+  #wincond{font-size:11.5px;opacity:.8;margin-top:6px;padding:6px;border-top:1px solid rgba(255,255,255,.12)}
+
+  /* ---------- prompt / toast ---------- */
+  #prompt{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);
+    border:1px solid rgba(255,255,255,.25);border-radius:24px;padding:8px 18px;font-weight:700;font-size:14px;z-index:40;
+    pointer-events:none;text-align:center;max-width:90vw}
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:60;
+    padding:12px 22px;border-radius:14px;font-weight:800;font-size:16px;box-shadow:var(--shadow);color:#fff;display:none}
+  #toast.show{display:block;animation:bubbleIn .2s ease}
+  #toast.good{background:linear-gradient(#2ecc71,#1c9e57)} #toast.bad{background:linear-gradient(#e74c3c,#c0392b)}
+  #toast.info{background:linear-gradient(#3d6ea5,#2c5282)}
+
+  .winbig{font-size:40px;margin:6px 0}
+  .keytag{font-size:12px;border-radius:20px;padding:3px 10px;font-weight:800}
+  .keytag.on{background:#2ecc71;color:#06371d} .keytag.off{background:#e0d9c5;color:#6b6450}
+  @media (max-width:760px){ #mid{grid-template-columns:1fr} #logpanel{max-height:140px} }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= SETUP ================= -->
+  <div id="setup" class="overlay">
+    <div class="panel"><div class="pad">
+      <div class="brand"><div class="logo">ナナ</div>
+        <div><h1>Nana</h1><p style="margin:0">记忆 · 诈唬 · 凑组的桌游 — 现在能单人对战会“心理战”的 AI</p></div></div>
+
+      <h2>玩家人数</h2>
+      <div class="seg" id="pcount">
+        <button data-n="2">2</button><button data-n="3" class="on">3</button>
+        <button data-n="4">4</button><button data-n="5">5</button>
+      </div>
+      <div id="seatcfg"></div>
+
+      <h2>AI 难度</h2>
+      <div class="seg" id="difficulty">
+        <button data-d="easy">莽撞 Easy</button>
+        <button data-d="medium" class="on">均衡 Medium</button>
+        <button data-d="hard">精明 Hard</button>
+      </div>
+
+      <label class="switch" style="margin-top:14px"><input type="checkbox" id="xmas"><span>🎄 圣诞变体（凑出 2/4/6/8/10 时全体把手牌传给左边）</span></label>
+
+      <h2>StepFun API Key（让 NPC 开口“心理战”）</h2>
+      <input type="password" id="apikey" placeholder="贴上你的 StepFun Key（仅存在本机浏览器，绝不上传/提交）">
+      <div class="row" style="margin-top:8px">
+        <select id="model" style="max-width:200px">
+          <option value="step-3.5-flash">step-3.5-flash（快·推荐）</option>
+          <option value="step-3.5-flash-2603">step-3.5-flash-2603</option>
+          <option value="step-3.7-flash">step-3.7-flash</option>
+        </select>
+        <span class="keytag off" id="keytag">无 Key：用内置台词</span>
+      </div>
+      <div class="hint">悬停对手的牌时，NPC 会按性格用 StepFun 实时生成台词（骗你 / 激你 / 怂恿你翻别人）。没填 Key 也能玩，只是台词改用内置剧本。</div>
+
+      <div class="row" style="margin-top:20px;justify-content:space-between">
+        <button class="btn ghost" id="howto">玩法说明</button>
+        <button class="btn big" id="start">开始游戏 ▶</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ================= GAME ================= -->
+  <div id="game" hidden>
+    <div id="topbar">
+      <span class="title">Nana<small>ナナ · 心理战</small></span>
+      <span id="turnchip">—</span>
+      <span id="attemptchip" class="hide"></span>
+      <span class="spacer"></span>
+      <span class="keytag off" id="keytag2">内置台词</span>
+      <button class="btn ghost" id="rulesBtn">玩法</button>
+      <button class="btn ghost" id="setBtn">设置</button>
+      <button class="btn ghost" id="restartBtn">重开</button>
+    </div>
+
+    <div id="mid">
+      <div id="board">
+        <section id="opponents"></section>
+        <section id="center">
+          <div id="gridwrap"><div id="gridlabel">桌面牌堆 GRID</div><div id="grid"></div></div>
+        </section>
+        <section id="you"></section>
+      </div>
+      <aside id="logpanel">
+        <h3>记录 LOG</h3>
+        <ul id="log"></ul>
+        <div id="wincond">🏆 胜利条件：① 凑齐 3 组　② 两组之和或差 = 7　③ 凑齐一组 7</div>
+      </aside>
+    </div>
+    <div id="prompt"></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- gate / win / rules / settings -->
+  <div id="gate" class="overlay" hidden></div>
+  <div id="win" class="overlay" hidden></div>
+
+  <div id="rules" class="overlay" hidden><div class="panel"><div class="pad">
+    <h1>玩法说明</h1>
+    <p><b>目标</b>：通过“翻牌”凑成 3 张相同数字的“组”。每回合你不断翻牌，<b>第一张翻出的数字就是本回合目标</b>，之后翻的必须都等于它。</p>
+    <h2>怎么翻</h2>
+    <ul>
+      <li><b>翻手牌</b>：指定任意玩家（含自己），要他亮出“最大”或“最小”的牌（手牌已排序，只能从两端亮）。可以反复要同一个人。</li>
+      <li><b>翻桌面</b>：翻开中间牌堆里任意一张背面牌。</li>
+    </ul>
+    <h2>成功 / 失败</h2>
+    <ul>
+      <li>翻出<b>第 3 张</b>相同数字 → <b>成功</b>！这 3 张（无论来自谁的手牌或桌面）都归你成一组——<b>能从对手手里抢牌</b>。</li>
+      <li>翻出<b>不符</b>的数字 → <b>失败</b>！手牌还给各自主人，桌面牌翻回背面。换下家。</li>
+      <li>⚠️ 一旦开翻就<b>必须continue到成功或失败</b>，不能中途收手——靠记忆和推理选下一张。</li>
+    </ul>
+    <h2>获胜（凑成一组后立即判定）</h2>
+    <ul><li>① 凑齐 <b>3 组</b>；② 拥有 <b>两组数字之和或差为 7</b>（如 3&4、9&2、10&3）；③ 凑齐一组 <b>7</b>。</li></ul>
+    <h2>心理战</h2>
+    <p>悬停对手的牌，AI 会按性格用 StepFun 实时“忽悠”你：谎言家骗你、赌徒激你、怂恿者让你去翻别人……别全信。</p>
+    <p class="hint">若出现谁都凑不出的死局，会自动重洗未收集的牌以继续。</p>
+    <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn" data-close="rules">知道了</button></div>
+  </div></div></div>
+
+  <div id="settings" class="overlay" hidden><div class="panel"><div class="pad">
+    <h1>设置</h1>
+    <div class="field"><label>StepFun API Key</label>
+      <input type="password" id="apikey2" placeholder="贴上你的 StepFun Key（仅存本机）">
+      <div class="hint">仅保存在此浏览器的 localStorage，不会被提交到 GitHub 或上传任何服务器。</div>
+    </div>
+    <div class="field"><label>聊天模型</label>
+      <select id="model2">
+        <option value="step-3.5-flash">step-3.5-flash（快·推荐）</option>
+        <option value="step-3.5-flash-2603">step-3.5-flash-2603</option>
+        <option value="step-3.7-flash">step-3.7-flash</option>
+      </select>
+    </div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px">
+      <button class="btn ghost" data-close="settings">取消</button>
+      <button class="btn" id="saveSettings">保存</button>
+    </div>
+  </div></div></div>
+
+</div>
+
+<script>/*__CARD_DATA__*/</script>
+<script>/*__PERSONALITIES_JS__*/</script>
+<script>/*__ENGINE_JS__*/</script>
+<script>/*__QUIP_JS__*/</script>
+<script>/*__UI_JS__*/</script>
+</body>
+</html>

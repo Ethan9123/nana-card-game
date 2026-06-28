@@ -1,0 +1,56 @@
+# Nana ナナ · 心理战卡牌
+
+一个可在浏览器里玩的 **Nana**（记忆 + 诈唬 + 凑组）桌游数字版 —— 并且 **NPC 对手的“心理战”台词由 [StepFun](https://platform.stepfun.com/) API 实时生成**。
+
+> 当你把鼠标悬停在对手的牌上时，AI 会按各自性格忽悠你：**谎言家**骗你、**赌徒**激你、**怂恿者**让你去翻别人……别全信。
+
+🎮 **在线试玩（GitHub Pages）**：https://ethan9123.github.io/nana-card-game/
+
+---
+
+## 玩法
+
+- **目标**：把 3 张相同数字凑成一“组”。每回合不断翻牌，**第一张翻出的数字就是本回合目标**，之后翻的必须都等于它。
+- **翻牌的两种方式**
+  - 翻手牌：指定任意玩家（含自己），要他亮出“最大/最小”的牌（手牌已排序，只能从两端亮，可反复要同一人）。
+  - 翻桌面：翻开中间牌堆里任意一张背面牌。
+- **成功**：翻出第 3 张相同数字 → 这 3 张（无论来自谁的手牌或桌面）都归你成一组 —— **可以从对手手里抢牌**。
+- **失败**：翻出不符的数字 → 手牌还给主人、桌面翻回背面，换下家。
+- ⚠️ **一旦开翻必须continue到成功或失败**，不能中途收手 —— 靠记忆和推理选下一张。
+- **获胜（凑成一组后立即判定）**：① 凑齐 **3 组**；② 拥有 **两组数字之和或差为 7**（如 3&4、9&2、10&3）；③ 凑齐一组 **7**。
+- 可选 **🎄 圣诞变体**；若出现谁都凑不出的死局，会**自动重洗**未收集的牌以继续。
+
+支持 **2–5 人**：单人对战 1–4 个 AI，或同屏多人（真人回合间有“传递设备”遮挡）。
+
+## 启用 StepFun 实时台词
+
+游戏没有 Key 也能玩（NPC 台词会用内置剧本）。要开启**实时**心理战：
+
+1. 在 [StepFun 开放平台](https://platform.stepfun.com/interface-key) 获取 API Key。
+2. 打开游戏 → 右上「设置」→ 贴上你的 Key（推荐模型 `step-3.5-flash`）。
+3. 现在悬停对手的牌，台词就由 StepFun 按性格实时生成了。
+
+**安全**：Key 只保存在你**本机浏览器的 `localStorage`**，**绝不会**提交进本仓库或上传到任何服务器；本仓库不含任何 API Key。浏览器直接调用 StepFun（`/v1/messages`，`Authorization: Bearer`，`enable_thinking:false`，CORS 开放）。
+
+## NPC 性格
+
+`liar 谎言家` · `gambler 赌徒` · `manipulator 怂恿者` · `honest 老实人` · `chaos 疯子` · `analyst 心理学家`
+（这些性格的台词与系统提示由 **StepFun `step-3.7-flash` 生成**，见 `src/personalities.js`。）
+
+## 构建
+
+`index.html` 是自包含单文件（卡面图片 base64 内联，无外部依赖）。重新构建：
+
+```bash
+python build.py     # 读取 src/*.js + assets/card_data.json -> 生成 index.html
+```
+
+- `src/engine.js` — 纯游戏引擎 + 走子 AI（可在 Node 里跑无头模拟测试）。
+- `src/quip.js` — 运行时 StepFun 调用 + 缓存 + 预取 + 离线兜底。
+- `src/ui.js` — 界面渲染与交互。
+- `src/personalities.js` — StepFun 生成的 NPC 性格内容。
+- `assets/card_data.json` — 12 张卡面 + 牌背的 base64 图片。
+
+## 致谢
+
+原版 *Nana* 规则与卡牌美术来自原作者及 PnP 制作「人类迷惑行为研究员」；本项目为其数字化 + AI 心理战实现。

@@ -1,0 +1,9 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log
+
+# never commit secrets — the game reads the StepFun key at runtime from localStorage
+*.key
+.env
+secrets.*
