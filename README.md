@@ -28,9 +28,14 @@
 
 1. 在 [StepFun 开放平台](https://platform.stepfun.com/interface-key) 获取 API Key。
 2. 打开游戏 → 右上「设置」→ 贴上你的 Key（推荐模型 `step-3.5-flash`）。
-3. 现在悬停对手的牌，台词就由 StepFun 按性格实时生成了。
+3. 配置后，游戏会向 StepFun 请求或预取实时台词；悬停对手的牌时会显示相应台词。
 
-**安全**：Key 只保存在你**本机浏览器的 `localStorage`**，**绝不会**提交进本仓库或上传到任何服务器；本仓库不含任何 API Key。浏览器直接调用 StepFun（`/v1/messages`，`Authorization: Bearer`，`enable_thinking:false`，CORS 开放）。
+### Key 存储与数据发送
+
+- Key 保存在当前浏览器、当前站点的 `localStorage`，不是加密的密钥保险箱；同源页面脚本可以读取它。请勿在共享设备上长期保存，也不要把 Key 提交到仓库或分享截图。
+- 配置 Key 后，游戏会在台词生成及预取时由浏览器**直接请求 StepFun**：`https://api.stepfun.com/step_plan/v1/messages`，通过 `Authorization: Bearer <Key>` 发送 Key 进行正常 API 认证，不经本项目后端中转。这不是“Key 永不上服务器”，也不代表发生了泄露。
+- 请求正文包含所选模型、NPC 性格提示词及生成台词所需的游戏情境，例如手牌数量、悬停最大/最小牌、轮次事件；不只在悬停时请求，也可能提前预取。调用可能消耗你的 StepFun 额度，服务端如何处理请求以 StepFun 的政策为准。
+- 不配置 Key 也能使用内置台词。要停止新的 StepFun 请求，在设置中清空 Key 并保存；清除本站浏览器数据也会移除本地保存的 Key。已经发送的请求不会因此撤回。
 
 ## NPC 性格
 
