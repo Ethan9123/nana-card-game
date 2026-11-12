@@ -175,7 +175,7 @@
       <label class="switch" style="margin-top:14px"><input type="checkbox" id="xmas"><span>🎄 圣诞变体（凑出 2/4/6/8/10 时全体把手牌传给左边）</span></label>
 
       <h2>StepFun API Key（让 NPC 开口“心理战”）</h2>
-      <input type="password" id="apikey" placeholder="贴上你的 StepFun Key（仅存在本机浏览器，绝不上传/提交）">
+      <input type="password" id="apikey" placeholder="贴上你的 StepFun Key（本机保存，调用时发送给 StepFun 认证）">
       <div class="row" style="margin-top:8px">
         <select id="model" style="max-width:200px">
           <option value="step-3.5-flash">step-3.5-flash（快·推荐）</option>
@@ -254,8 +254,8 @@
   <div id="settings" class="overlay" hidden><div class="panel"><div class="pad">
     <h1>设置</h1>
     <div class="field"><label>StepFun API Key</label>
-      <input type="password" id="apikey2" placeholder="贴上你的 StepFun Key（仅存本机）">
-      <div class="hint">仅保存在此浏览器的 localStorage，不会被提交到 GitHub 或上传任何服务器。</div>
+      <input type="password" id="apikey2" placeholder="贴上你的 StepFun Key（本机保存，调用时用于认证）">
+      <div class="hint">Key 保存在此浏览器的 localStorage（非加密保险箱）。启用后，生成或预取台词时会将 Key 作为认证信息、NPC 性格及游戏情境发送给 StepFun，可能消耗 API 额度。不经本项目后端中转。清空 Key 并保存可停止新的请求；已发送的请求不会撤回。</div>
     </div>
     <div class="field"><label>聊天模型</label>
       <select id="model2">
